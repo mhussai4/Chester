@@ -3,9 +3,6 @@
 
 #include "chester.h"
 
-////////////////////////////////////////////////////////////////////////////////
-// PROBLEM 1 Functions
-////////////////////////////////////////////////////////////////////////////////
 
 int suite_create_testdir(suite_t *suite)
 {
@@ -40,24 +37,7 @@ int suite_create_testdir(suite_t *suite)
     return 1; // Return 1 to indicate the directory was successfully created
 }
 
-// PROBLEM 1: Creates the testing results directory according to the
-// name in the suite `testdir` field. If testdir does not exist, it is
-// created as directory with permisions of User=read/write/execute
-// then returns 1. If testdir already exists and is a directory, does
-// nothing and returns 0. If a non-directory file named testdir
-// already exists, print an error message and return -1 to indicate
-// testing cannot proceed. The error message is:
-//
-// ERROR: Could not create test directory 'XXX'
-//        Non-directory file with that name already exists
-//
-// with XXX substituted with the value of testdir
-//
-// CONSTRAINT: This function must be implemented using low-level
-// system calls. Use of high-level calls like system("cmd") will be
-// reduced to 0 credit. Review system calls like stat() and mkdir()
-// for use here. The access() system call may be used but keep in mind
-// it does not distinguish between regular files and directories.
+
 
 int suite_test_set_outfile_name(suite_t *suite, int testnum)
 {
@@ -82,20 +62,7 @@ int suite_test_set_outfile_name(suite_t *suite, int testnum)
 
     return 0;
 }
-// PROBLEM 1: Sets the field `outfile_name` for the numbered
-// tests. The filename is constructed according to the pattern
-//
-// TESTDIR/PREFIX-output-05.txt
-//
-// with TESTDIR and PREFIX replaced by the testdir and prefix fields
-// in the suite and the 05 replaced by the test number. The test
-// number is formatted as indicated: printed in a width of 2 with 0
-// padding for single-digit test numbers. The sprintf() or snprintf()
-// functions are useful to create the string. The string is then
-// duplicated into the heap via strdup() and a pointer to it saved in
-// `outfile_name`. The file is not created but the name will be used
-// when starting a test as output will be redirected into
-// outfile_name. This function should always return 0.
+
 
 int suite_test_create_infile(suite_t *suite, int testnum)
 {
@@ -145,33 +112,7 @@ int suite_test_create_infile(suite_t *suite, int testnum)
     // Return 0 to indicate success
     return 0;
 }
-// PROBLEM 1: Creates a file that is used as input for the numbered
-// test. The file will contain the contents of the `input` field. If
-// that field is NULL, this function immediately returns. Otherwise, a
-// file named like
-//
-//   TESTDIR/PREFIX-input-05.txt
-//
-// is created with TESTDIR and PREFIX replaced by the `testdir` field
-// and `prefix` fields of the suite and the 05 replaced by the test
-// number. A copy of this filename is duplicated and retained in the
-// `infile_name` field for the test. After opening this file, the
-// contents of the `input` field are then written to this file before
-// closing the file and returning
-// 0. The testing directory is assumed to exist by this function. The
-// options associated with the file are to be the following:
-// - Open write only
-// - Create the file if it does not exist
-// - Truncate the file if it does exist
-// - Created files have the User Read/Write permission set
-// If the function cannot create the input file due to open() failing,
-// an error message is printed and -1 is returned; the error message is
-// printed using perror() and will appear as:
-//
-//   Could not create input file : CAUSE
-//
-// with the portion to the right being added by perror() to show the
-// system cause
+
 
 int suite_test_read_output_actual(suite_t *suite, int testnum)
 {
@@ -237,25 +178,6 @@ int suite_test_read_output_actual(suite_t *suite, int testnum)
     // Return the number of bytes read from the file
     return bytes_read;
 }
-// PROBLEM 1: Reads the contents of the file named in field
-// `outfile_name` for the given testnum into heap-allocated space and
-// assigns the output_actual field to that space. Uses a combination
-// of stat() and read() to efficiently read in the entire contents of
-// a file into a malloc()'d block of memory, null terminates it (\0)
-// so that the contents may treatd as a valid C string. Returns the
-// total number of bytes read from the file on on success (this is
-// also the length of the `output_actual` string). If the file could
-// not be opened or read, the `output_actual` field is not changed and
-// -1 is returned.
-//
-// CONSTRAINT: This function should perform at most 1 heap allocation;
-// use of the realloc() function is barred. System calls like stat()
-// MUST be used to determine the amount of memory needed before
-// allocation, Failure to do so will lead to loss of credit.
-
-////////////////////////////////////////////////////////////////////////////////
-// PROBLEM 2 Functions
-////////////////////////////////////////////////////////////////////////////////
 
 int suite_test_start(suite_t *suite, int testnum)
 {
@@ -364,45 +286,7 @@ int suite_test_start(suite_t *suite, int testnum)
         return 0; // Return success
     }
 }
-// PROBLEM 2: Start a child process that will run program in the
-// indicated test number. The parent process first sets the
-// outfile_name and creates infile_name with the program input. It
-// then creates a child process, sets the test field `child_pid` to
-// the child process ID and returns 0.
-//
-// The child sets up output redirection so that the standard out AND
-// standard error streams for the child process is channeled into the
-// file named in field `outfile_name`. Note that standard out and
-// standard error are "merged" so that they both go to the same
-// `outfile_name`. This file should have the same options used when
-// opening it as described in suite_test_create_infile(). If
-// infile_name is non-NULL, input redirection is also set up with
-// input coming from the file named in field `infile_name`. Uses the
-// split_into_argv() function to create an argv[] array which is
-// passed to an exec()-family system call.
-//
-// Any errors in the child during input redirection setup, output
-// redirection setup, or exec()'ing print error messages and cause an
-// immediate exit() with an associated error code. These are as
-// follows:
-//
-// | CONDITION            | EXIT WITH CODE         |
-// |----------------------+------------------------|
-// | Input redirect fail  | exit(TESTFAIL_INPUT);  |
-// | Output redirect fail | exit(TESTFAIL_OUTPUT); |
-// | Exec failure         | exit(TESTFAIL_EXEC);   |
-//
-// Since output redirection is being set up, printing error messages
-// in the child process becomes unreliable. Instead, the exit_code for
-// the child process should be checked for one of the above values to
-// determine what happened.
-//
-// NOTE: When correctly implemented, this function should never return
-// in the child process though the compiler may require a `return ??`
-// at the end to match the int return type. NOT returning from this
-// function in the child is important as if a child manages to return,
-// there will now be two instances of chester running with the child
-// starting its own series of tests which will not end well...
+
 
 int suite_test_finish(suite_t *suite, int testnum, int status)
 {
@@ -503,43 +387,7 @@ int suite_test_finish(suite_t *suite, int testnum, int status)
 
     return 0; // Successfully processed the test
 }
-// PROBLEM 2
-//
-// Processes a tests after its child process has completed and
-// determines whether the tests passes / fails.
-//
-// The `status` parameter comes from a wait()-style call and is use to
-// set the `exit_code_actual` of the test. `exit_code_actual` is one
-// of the following two possibilities:
-// - 0 or positive integer: test program exited normally and the exit
-//   code/status is stored.
-// - Negative integer: The tested program exited abnormally due to
-//   being signaled and the negative of the signal number is
-//   stored. Ex: child received SIGSEGV=11 so exit_code_actual is -11.
-// If `status` indicated neither a normal nor abnormal exit, this
-// function prints an error and returns (this case is not tested).
-//
-// Output produced by the test is read into the `output_actual` field
-// using previously written functions.
-//
-// The test's `state` field is set to one of TEST_PASSED or
-// TEST_FAILED. Comparisons are done between the fields:
-// - output_expect vs output_actual (strings)
-// - exit_code_expect vs exit_code_actual (int)
-//
-// If there is a mismatch with these, the test has failed and its
-// `state` is set to TEST_FAILED. If both sets of fields match, the
-// state of the test becomes `TEST_PASSED` and the suite's
-// `tests_passed` field is incremented.
-//
-// Special Case: if output_expect is NULL, there is no expected output
-// and comparison to output_actual should be skipped. This covers
-// testing cases where a program is being run to examine only whether
-// it returns the correct exit code or avoids segfaults.
-
-////////////////////////////////////////////////////////////////////////////////
-// PROBLEM 1 Functions
-////////////////////////////////////////////////////////////////////////////////
+///////////////////
 
 void print_window(FILE *out, char *str, int center, int lrwidth)
 {
@@ -564,30 +412,7 @@ void print_window(FILE *out, char *str, int center, int lrwidth)
 
     fprintf(out, "\n"); // Print a newline at the end
 }
-// PROBLEM 3
-//
-// Print part of the string that contains index center to the given
-// out file. Print characters in the string between
-// [center-lrwidth,center+lrwidth] with the upper bound being
-// inclusive. If either the start or stop point is out of bounds,
-// truncate the printing: the minimum starting point is index 0, the
-// maximum stopping point is the string length.
-//
-// EXAMPLES:
-// char *s = "ABCDEFGHIJKL";
-// //         012345678901
-// print_window(stdout, s, 4, 3);
-// // BCDEFGH
-// // 1234567
-// print_window(stdout, s, 2, 5);
-// // ABCDEFGH
-// // 01234567
-// print_window(stdout, s, 8, 4);
-// // EFGHIJKL
-// // 45678901
-//
-// NOTE: this function is used when creating test results to show
-// where expected and actual output differ
+
 
 int differing_index(char *strA, char *strB)
 {
@@ -613,21 +438,7 @@ int differing_index(char *strA, char *strB)
     return -1;
 }
 
-// PROBLEM 3
-//
-// Finds the lowest index where different characters appear in strA and
-// strB. If the strings are identical except that one is longer than
-// the other, the index returned is the length of the shorter
-// string. If the strings are identical, returns -1.
-//
-// EXAMPLES:
-// differing_index("01234567","0123x567") -> 4
-// differing_index("012345","01234567")   -> 6
-// differing_index("012345","01x34567")   -> 2
-// differing_index("012345","012345")     -> -1
-//
-// NOTE: this function is used when creating test results to show
-// where expected and actual output differ
+
 
 int suite_test_make_resultfile(suite_t *suite, int testnum)
 {
@@ -717,85 +528,6 @@ int suite_test_make_resultfile(suite_t *suite, int testnum)
 
     return 0;
 }
-// PROBLEM 3
-//
-// Creates a result file for the given test. The general format is shown in the example below.
-//   # TEST 6: wc 1 to 10 (FAIL)              // testnum and test title, print "ok" for passed tests
-//   ## DESCRIPTION
-//   Checks that wc works with input          // description field of test
-//
-//   ## PROGRAM: wc                           // program field of test
-//
-//   ## INPUT:                                // input field of test, "INPUT: None" for NULL input
-//   1
-//   2
-//   3
-//   4
-//   5
-//   6
-//   7
-//   8
-//   9
-//   10
-//                                            // if output_expect is NULL, print "OUTPUT: skipped check"
-//   ## OUTPUT: MISMATCH at char position 3   // results of differing_index() between
-//   ### Expect                               // output_expect and output_actual fields
-//   10 10 21                                 // output_expect via calls to print_window()
-//
-//   ### Actual
-//   10  9 20                                 // output_actual via calls to print_window()
-//                                            // if no MISMATCH in output, prints ## OUTPUT: ok
-//
-//   ## EXIT CODE: ok                         // MISMATCH if exit_code_expect and actual don't match and
-//                                            // prints Expect/Actual values
-//   ## RESULT: FAIL                          // "ok" for passed tests
-//
-// The file to create is named according to the pattern
-//
-// TESTDIR/PREFIX-result-05.md
-//
-// with TESTDIR / PREFIX and 05 substituted for the `testdir` and
-// `prefix` fields of suite and 05 for the testnum (width 2 and
-// 0-padded). Note the use of the .md extension to identify the output
-// as Markdown formatted text.
-//
-// The output file starts with a heading which prints the a heading
-// with the testnum and title in it along with ok/FAIL based on the
-// `state` of the test. Then 6 sections are printed which are
-// 1. DESCRIPTION
-// 2. PROGRAM
-// 3. INPUT
-// 4. OUTPUT (comparing output_expect and output_actual)
-// 5. EXIT CODE (comparing exit_code_expect and exit_code_actual)
-// 6. RESULT
-//
-// In the OUTPUT section, if a difference is detected at position N
-// via the differing_index() function, then a window around position N
-// is printed into the file for both the expected and actual
-// output. The window width used is defined in the header via the
-// constant TEST_DIFFWIDTH and is passed to print_window() function.
-//
-// If the output_expect field is NULL, the OUTPUT section header has
-// the message "skipped check" printed next to it.
-//
-// In the EXIT CODE section, if there is a mismatch between the
-// expected and actual exit_code, then they are both printed as in:
-// ## EXIT CODE: MISMATCH
-// - Expect: 0
-// - Actual: 1
-//
-// The final RESULT section prints either ok / FAIL depending on the
-// test state.
-//
-// If the result file cannot be opened/created, this file prints the
-// error message
-//   ERROR: Could not create result file 'XXX'
-// with XXX substituted for the file name and returns -1. Otherwise
-// the function returns 0 on successfully creating the resultfile.
-
-////////////////////////////////////////////////////////////////////////////////
-// PROBLEM 4 Functions
-////////////////////////////////////////////////////////////////////////////////
 
 int suite_run_tests_singleproc(suite_t *suite)
 {
@@ -858,36 +590,7 @@ int suite_run_tests_singleproc(suite_t *suite)
     return 0;
 }
 
-// PROBLEM 4
-//
-// Runs tests in the suite one at time. Before begining the tests,
-// creates the testing directory with a call to
-// suite_create_testdir().  If the directory cannot be created, this
-// function returns -1 without further action.
-//
-// The tests with indices in the field `tests_torun[]` are run in the
-// order that they appear there. This is done in a loop.
-// `suite_test_start(..)` is used to start tests and wait()-style
-// system calls are used to suspend execution until the child process
-// is finished. Additional functions previously written are then used
-// to
-// - Assign the exit_code for the child
-// - Read the actual output into the test struct
-// - Set the pass/fail state
-// - Produce a results file for the test
-//
-// Prints the "Running with single process:" and each test that
-// completes prints a "." on the screen to give an indication of
-// progress. "Done" is printed when all tests complete so that a full
-// line which runs 8 tests looks like
-//
-//    Running with single process: ........ Done
-//
-// If errors arise such as with waiting for a child process, failures
-// with getting the test output, or other items, error messages should
-// be printed but the loop should continue. No specific error messages
-// are required and no testing is done; error messages are solely to
-// aid with debugging problems.
+
 
 void suite_print_results_table(suite_t *suite)
 {
@@ -917,99 +620,6 @@ void suite_print_results_table(suite_t *suite)
     }
     return;
 }
-// PROBLEM 4
-//
-// Prints a table of test results formatted like the following.
-//
-//  0) echo check           : FAIL -> see chester-test/prob1-result-00.txt
-//  1) sleep 2s             : ok
-//  2) pwd check            : FAIL -> see chester-test/prob1-result-02.txt
-//  3) seq check            : ok
-//  4) ls check             : FAIL -> see chester-test/prob1-result-04.txt
-//  5) ls not there         : ok
-//  6) wc 1 to 10           : FAIL -> see chester-test/prob1-result-06.txt
-//  7) date runs            : ok
-//
-// The test number at the beginning of the line is printed with width
-// 2 and space padded. The Test title is printed with a width of 20,
-// left-aligned using capabilities of printf().  If the test passes,
-// the message "ok" is added while if it fails, a FAIL appears and the
-// result file associated with the test is indicated. This function
-// honors the `tests_torun[]` array and will only print table results
-// for tests with indices in this array.
-
-////////////////////////////////////////////////////////////////////////////////
-// PROBLEM 5 Functions
-////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]);
 
-// PROBLEM 5
-//
-// Defined in the file chester_main.c. Entry point for the Chester
-// application which may be invoked with one of the following command
-// line forms along with expected output.
-//
-// >> ./chester tests.md        # RUNS ALL TESTS
-// tests.md : running 8 / 8 tests
-// Running with single process: ........ Done
-//  0) echo check           : FAIL -> see chester-test/prob1-result-00.txt
-//  1) sleep 2s             : ok
-//  2) pwd check            : FAIL -> see chester-test/prob1-result-02.txt
-//  3) seq check            : ok
-//  4) ls check             : FAIL -> see chester-test/prob1-result-04.txt
-//  5) ls not there         : ok
-//  6) wc 1 to 10           : FAIL -> see chester-test/prob1-result-06.txt
-//  7) date runs            : ok
-// Overall: 4 / 8 tests passed
-//
-// >> ./chester tests.md 2 4 6  # RUNS ONLY 3 TESTS NUMBERED 2 4 6
-// tests.md : running 3 / 8 tests
-// Running with single process: ... Done
-//  2) pwd check            : FAIL -> see chester-test/prob1-result-02.txt
-//  4) ls check             : FAIL -> see chester-test/prob1-result-04.txt
-//  6) wc 1 to 10           : FAIL -> see chester-test/prob1-result-06.txt
-// Overall: 0 / 3 tests passed
-//
-// main() parses the indicated input file to create a test suite
-// struct. It then determines if all tests or only specified tests
-// will be run by analyzing the command line argument structure. The
-// `suite.tests_torun[]` and `suite.test_torun_count` fields are set
-// according to which tests will be run: either specified tests only
-// or 0..tests_count-1 for all tests.
-//
-// Before running tests, output lines are printed indicating the test
-// file and number of tests to be run versus the total number of tests
-// in the file. The tests are then run and an output table is produced
-// using appropriate functions. The "Overall" line is printed with the
-// count of tests passed and that were actually run.
-//
-// MAKEUP CREDIT: Support the following additional invocations that
-// support concurrent test execution.
-//
-// >> ./chester -max_procs 4 tests.md         # RUN ALL TESTS WITH
-// tests.md : running 8 / 8 tests             # 4 CONCURRENT PROCESSES
-// Running with 4 processes: ........ Done
-//  0) echo check           : FAIL -> see chester-test/prob1-result-00.txt
-//  1) sleep 2s             : ok
-//  2) pwd check            : FAIL -> see chester-test/prob1-result-02.txt
-//  3) seq check            : ok
-//  4) ls check             : FAIL -> see chester-test/prob1-result-04.txt
-//  5) ls not there         : ok
-//  6) wc 1 to 10           : FAIL -> see chester-test/prob1-result-06.txt
-//  7) date runs            : ok
-// Overall: 4 / 8 tests passed
-//
-// >> ./chester -max_procs 3 tests.md 2 4 6   # RUN 3 SELECTED TESTS WITH
-// tests.md : running 3 / 8 tests             # 3 CONCURRENT PROCESSES
-// Running with 3 processes: ... Done
-//  2) pwd check            : FAIL -> see chester-test/prob1-result-02.txt
-//  4) ls check             : FAIL -> see chester-test/prob1-result-04.txt
-//  6) wc 1 to 10           : FAIL -> see chester-test/prob1-result-06.txt
-// Overall: 0 / 3 tests passed
-//
-// Concurrently running processes are run via the associated
-// `suite_run_tests_multiproc()` program.  The `-max_procs` command
-// line flag sets the `suite.max_procs` field which is used in
-// `suite_run_tests_multiproc()` to launch multiple processes to speed
-// up test completion.
